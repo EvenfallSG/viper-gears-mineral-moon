@@ -55,7 +55,7 @@
     display: grid;
     grid-template-columns: 1fr 340px;
     gap: 0;
-    min-height: calc(100vh - 96px);
+    align-items: start;
   }
 
   @media (max-width: 880px) {
@@ -65,26 +65,45 @@
   .stage {
     padding: 2rem;
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: center;
-    position: relative;
+    position: sticky;
+    top: var(--header-h, 0px);
+    height: calc(100vh - var(--header-h, 0px));
+    overflow: hidden;
     background:
       linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px) 0 0 / 24px 24px,
       linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px) 0 0 / 24px 24px;
   }
 
+  .stage > * { align-self: center; }
+
+  @media (max-width: 880px) {
+    .stage {
+      position: static;
+      height: auto;
+      min-height: 60vh;
+    }
+  }
+
   .canvas-wrap {
     position: relative;
     max-width: 100%;
-    max-height: 78vh;
+    max-height: calc(100vh - var(--header-h, 0px) - 4rem);
   }
 
   canvas {
     max-width: 100%;
-    max-height: 78vh;
+    max-height: calc(100vh - var(--header-h, 0px) - 4rem);
     display: block;
     border-radius: 2px;
     box-shadow: 0 0 0 1px var(--border);
+  }
+
+  @media (max-width: 880px) {
+    .canvas-wrap, canvas {
+      max-height: 60vh;
+    }
   }
 
   .drop-zone {
@@ -126,6 +145,17 @@
     flex-direction: column;
     gap: 1.5rem;
     overflow-y: auto;
+    height: calc(100vh - var(--header-h, 0px));
+    -webkit-overflow-scrolling: touch;
+  }
+
+  @media (max-width: 880px) {
+    .sidebar {
+      height: auto;
+      overflow-y: visible;
+      border-left: none;
+      border-top: 1px solid var(--border);
+    }
   }
 
   .section-label {
@@ -165,6 +195,10 @@
 
   .control:last-child { margin-bottom: 0; }
 
+  @media (pointer: coarse) {
+    .control { margin-bottom: 1.6rem; }
+  }
+
   .control-head {
     display: flex;
     justify-content: space-between;
@@ -195,8 +229,8 @@
 
   input[type="range"]::-webkit-slider-thumb {
     -webkit-appearance: none;
-    width: 12px;
-    height: 12px;
+    width: 14px;
+    height: 14px;
     border-radius: 50%;
     background: var(--accent);
     cursor: pointer;
@@ -204,12 +238,23 @@
   }
 
   input[type="range"]::-moz-range-thumb {
-    width: 12px;
-    height: 12px;
+    width: 14px;
+    height: 14px;
     border-radius: 50%;
     background: var(--accent);
     cursor: pointer;
     border: none;
+  }
+
+  @media (pointer: coarse) {
+    input[type="range"]::-webkit-slider-thumb {
+      width: 22px;
+      height: 22px;
+    }
+    input[type="range"]::-moz-range-thumb {
+      width: 22px;
+      height: 22px;
+    }
   }
 
   .divider {
@@ -571,6 +616,21 @@
 
 <script>
 (function() {
+  // Pin --header-h to the real rendered header height (rather than guessing
+  // a fixed px value) so the sticky image stage and scrollable sidebar both
+  // size correctly against whatever the header's actual height turns out to
+  // be — keeps the moon visible in the viewport while the sidebar scrolls,
+  // instead of drifting off-screen as more controls are added below it.
+  function setHeaderHeightVar() {
+    const header = document.querySelector('header');
+    if (header) {
+      document.documentElement.style.setProperty('--header-h', header.offsetHeight + 'px');
+    }
+  }
+  setHeaderHeightVar();
+  window.addEventListener('resize', setHeaderHeightVar);
+  window.addEventListener('orientationchange', () => setTimeout(setHeaderHeightVar, 100));
+
   const dropZone = document.getElementById('drop-zone');
   const fileInput = document.getElementById('file-input');
   const stage = document.getElementById('stage');
@@ -1122,8 +1182,19 @@
           ca -= Math.abs(ca) * perPassBlue * 0.20;
         }
         if (perPassWarm !== 0 && cb > 0) {
-          cb += Math.abs(cb) * perPassWarm * 0.50;
-          ca += Math.abs(ca) * perPassWarm * 0.18 * redBias;
+          // redBias now reshapes the warm push instead of only adding to it:
+          // above 1.0 it actively throttles the yellow(b)-axis growth rate
+          // while boosting red(a)-axis growth, so the warm side can genuinely
+          // reach deep red/umber instead of permanently capping out ochre.
+          // At redBias=1 (slider default 100) this reduces to the original
+          // 0.50/0.18 balance exactly. The throttle uses redBias^1.6 (steeper
+          // than linear) on the yellow side because b's own per-pass chroma
+          // growth (perPassChroma, applied above regardless of warm push)
+          // otherwise out-races a small reduction here pass after pass.
+          const yellowRate = 0.50 / Math.pow(redBias, 1.6);
+          const redRate = 0.18 * Math.pow(redBias, 1.6);
+          cb += Math.abs(cb) * perPassWarm * yellowRate;
+          ca += Math.abs(ca) * perPassWarm * redRate;
         }
       }
 
