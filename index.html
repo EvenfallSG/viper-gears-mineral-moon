@@ -42,3 +42,882 @@
   }
 
   h1 span { color: var(--accent); }
+
+  .subtitle {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.78rem;
+    color: var(--text-dim);
+    margin-top: 0.4rem;
+    letter-spacing: 0.02em;
+  }
+
+  .layout {
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    gap: 0;
+    min-height: calc(100vh - 96px);
+  }
+
+  @media (max-width: 880px) {
+    .layout { grid-template-columns: 1fr; }
+  }
+
+  .stage {
+    padding: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    background:
+      linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px) 0 0 / 24px 24px,
+      linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px) 0 0 / 24px 24px;
+  }
+
+  .canvas-wrap {
+    position: relative;
+    max-width: 100%;
+    max-height: 78vh;
+  }
+
+  canvas {
+    max-width: 100%;
+    max-height: 78vh;
+    display: block;
+    border-radius: 2px;
+    box-shadow: 0 0 0 1px var(--border);
+  }
+
+  .drop-zone {
+    width: 480px;
+    max-width: 90vw;
+    padding: 4rem 2rem;
+    border: 1px dashed var(--border);
+    border-radius: 4px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.15s ease, background 0.15s ease;
+  }
+
+  .drop-zone:hover, .drop-zone.drag {
+    border-color: var(--accent-dim);
+    background: rgba(255,107,53,0.04);
+  }
+
+  .drop-zone p {
+    margin: 0;
+    font-size: 0.85rem;
+    color: var(--text-dim);
+  }
+
+  .drop-zone .big {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.3rem;
+    letter-spacing: 0.03em;
+    color: var(--text);
+    margin-bottom: 0.5rem;
+  }
+
+  #file-input { display: none; }
+
+  .sidebar {
+    border-left: 1px solid var(--border);
+    padding: 1.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    overflow-y: auto;
+  }
+
+  .section-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.68rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 0.85rem;
+  }
+
+  .presets {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+  }
+
+  .preset-btn {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.72rem;
+    font-weight: 500;
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    padding: 0.55rem 0.4rem;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: all 0.12s ease;
+  }
+
+  .preset-btn:hover { border-color: var(--text-dim); color: var(--text); }
+  .preset-btn.active { border-color: var(--accent); color: var(--accent); background: rgba(255,107,53,0.08); }
+
+  .control {
+    margin-bottom: 1.1rem;
+  }
+
+  .control:last-child { margin-bottom: 0; }
+
+  .control-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 0.4rem;
+  }
+
+  .control-head label {
+    font-size: 0.74rem;
+    color: var(--text-dim);
+    font-weight: 500;
+  }
+
+  .control-head .val {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--accent);
+  }
+
+  input[type="range"] {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 2px;
+    background: var(--border);
+    border-radius: 1px;
+    outline: none;
+  }
+
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--accent);
+    cursor: pointer;
+    border: none;
+  }
+
+  input[type="range"]::-moz-range-thumb {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--accent);
+    cursor: pointer;
+    border: none;
+  }
+
+  .divider {
+    height: 1px;
+    background: var(--border);
+  }
+
+  .btn-row {
+    display: flex;
+    gap: 8px;
+    margin-top: auto;
+    padding-top: 0.5rem;
+  }
+
+  button.action {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 600;
+    font-size: 0.78rem;
+    letter-spacing: 0.02em;
+    padding: 0.75rem 1rem;
+    border-radius: 3px;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    background: var(--panel-2);
+    color: var(--text);
+    flex: 1;
+    transition: all 0.12s ease;
+  }
+
+  button.action:hover { border-color: var(--text-dim); }
+
+  button.primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #0a0a0a;
+  }
+
+  button.primary:hover { background: #ff7e4d; border-color: #ff7e4d; }
+
+  button.action:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+  }
+
+  .toggle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .toggle-row label {
+    font-size: 0.74rem;
+    color: var(--text-dim);
+    font-weight: 500;
+  }
+
+  .switch {
+    position: relative;
+    width: 34px;
+    height: 18px;
+    flex-shrink: 0;
+  }
+
+  .switch input { opacity: 0; width: 0; height: 0; }
+
+  .slider-toggle {
+    position: absolute;
+    cursor: pointer;
+    inset: 0;
+    background: var(--border);
+    transition: 0.15s;
+    border-radius: 18px;
+  }
+
+  .slider-toggle:before {
+    position: absolute;
+    content: "";
+    height: 14px;
+    width: 14px;
+    left: 2px;
+    top: 2px;
+    background: var(--text-dim);
+    transition: 0.15s;
+    border-radius: 50%;
+  }
+
+  input:checked + .slider-toggle { background: rgba(255,107,53,0.25); }
+  input:checked + .slider-toggle:before { background: var(--accent); transform: translateX(16px); }
+
+  .footnote {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--text-dim);
+    line-height: 1.6;
+  }
+
+  .empty-sidebar {
+    color: var(--text-dim);
+    font-size: 0.78rem;
+    line-height: 1.6;
+  }
+
+  .badge {
+    display: inline-block;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.62rem;
+    color: var(--accent);
+    border: 1px solid var(--accent-dim);
+    border-radius: 2px;
+    padding: 2px 6px;
+    margin-top: 1rem;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>VIPER GEARS <span>MINERAL MOON</span></h1>
+  <div class="subtitle">REVEAL TRUE LUNAR GEOLOGY THROUGH SATURATION-LAYER STACKING — IN BROWSER, NO UPLOAD</div>
+</header>
+
+<div class="layout">
+  <div class="stage" id="stage">
+    <div class="drop-zone" id="drop-zone">
+      <div class="big">DROP YOUR MOON SHOT</div>
+      <p>or click to browse · JPG / PNG / TIFF<br>processing happens entirely in your browser</p>
+      <input type="file" id="file-input" accept="image/*">
+    </div>
+    <div class="canvas-wrap" id="canvas-wrap" style="display:none;">
+      <canvas id="canvas"></canvas>
+    </div>
+  </div>
+
+  <div class="sidebar" id="sidebar">
+    <div class="empty-sidebar" id="empty-msg">
+      Load an image to begin. The processor stacks saturation-boosted layers using a luminosity mask, so brightness stays true while the subtle blues of titanium-rich basalt and the warm tans of iron-rich highlands separate out.
+      <div class="badge">REDCAT 51 + POWERMATE 2.5 READY</div>
+    </div>
+
+    <div id="controls" style="display:none; flex-direction:column; gap:1.5rem; flex:1;">
+
+      <div>
+        <div class="section-label">Presets</div>
+        <div class="presets">
+          <button class="preset-btn" data-preset="subtle">Subtle</button>
+          <button class="preset-btn active" data-preset="classic">Classic</button>
+          <button class="preset-btn" data-preset="enhanced">Enhanced</button>
+          <button class="preset-btn" data-preset="extreme">Extreme</button>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div>
+        <div class="section-label">Mineral layers</div>
+
+        <div class="control">
+          <div class="control-head">
+            <label>Saturation boost</label>
+            <span class="val" id="val-sat">170%</span>
+          </div>
+          <input type="range" id="sat" min="100" max="400" value="170" step="5">
+        </div>
+
+        <div class="control">
+          <div class="control-head">
+            <label>Layer passes</label>
+            <span class="val" id="val-passes">10</span>
+          </div>
+          <input type="range" id="passes" min="1" max="24" value="10" step="1">
+        </div>
+
+        <div class="control">
+          <div class="control-head">
+            <label>Luminosity protect</label>
+            <span class="val" id="val-lum">65%</span>
+          </div>
+          <input type="range" id="lum" min="0" max="100" value="65" step="5">
+        </div>
+
+        <div class="control">
+          <div class="control-head">
+            <label>Detail sharpen</label>
+            <span class="val" id="val-sharp">35%</span>
+          </div>
+          <input type="range" id="sharp" min="0" max="100" value="35" step="5">
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div>
+        <div class="section-label">Color balance</div>
+
+        <div class="control">
+          <div class="control-head">
+            <label>Blue / titanium shift</label>
+            <span class="val" id="val-blue">40</span>
+          </div>
+          <input type="range" id="blue" min="0" max="100" value="40" step="5">
+        </div>
+
+        <div class="control">
+          <div class="control-head">
+            <label>Warm / iron shift</label>
+            <span class="val" id="val-warm">40</span>
+          </div>
+          <input type="range" id="warm" min="0" max="100" value="40" step="5">
+        </div>
+
+        <div class="control">
+          <div class="control-head">
+            <label>Contrast</label>
+            <span class="val" id="val-contrast">10%</span>
+          </div>
+          <input type="range" id="contrast" min="-30" max="60" value="10" step="5">
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="toggle-row">
+        <label>Before / after split</label>
+        <div class="switch">
+          <input type="checkbox" id="split-toggle">
+          <span class="slider-toggle"></span>
+        </div>
+      </div>
+
+      <div class="footnote">
+        Technique: removes the disk's own color cast in CIE LAB space, then stacks N passes of chroma boost on the a/b plane (not absolute hue), pushing each pixel further toward blue or tan based on which side of neutral it already leans — luminosity stays locked to the original so only color separates out.
+      </div>
+
+      <div class="btn-row">
+        <button class="action" id="reset-btn">Reset</button>
+        <button class="action primary" id="export-btn">Export PNG</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  const dropZone = document.getElementById('drop-zone');
+  const fileInput = document.getElementById('file-input');
+  const stage = document.getElementById('stage');
+  const canvasWrap = document.getElementById('canvas-wrap');
+  const canvas = document.getElementById('canvas');
+  const ctx = canvas.getContext('2d', { willReadFrequently: true });
+  const emptyMsg = document.getElementById('empty-msg');
+  const controls = document.getElementById('controls');
+
+  let originalImage = null;
+  let originalImageData = null;
+  let labCastCache = null;
+  let baseCanvas = document.createElement('canvas');
+  let baseCtx = baseCanvas.getContext('2d', { willReadFrequently: true });
+
+  const sliders = {
+    sat: document.getElementById('sat'),
+    passes: document.getElementById('passes'),
+    lum: document.getElementById('lum'),
+    sharp: document.getElementById('sharp'),
+    blue: document.getElementById('blue'),
+    warm: document.getElementById('warm'),
+    contrast: document.getElementById('contrast')
+  };
+
+  const vals = {
+    sat: document.getElementById('val-sat'),
+    passes: document.getElementById('val-passes'),
+    lum: document.getElementById('val-lum'),
+    sharp: document.getElementById('val-sharp'),
+    blue: document.getElementById('val-blue'),
+    warm: document.getElementById('val-warm'),
+    contrast: document.getElementById('val-contrast')
+  };
+
+  const presets = {
+    subtle:   { sat: 130, passes: 6,  lum: 80, sharp: 20, blue: 30, warm: 25, contrast: 5 },
+    classic:  { sat: 170, passes: 10, lum: 60, sharp: 35, blue: 60, warm: 55, contrast: 10 },
+    enhanced: { sat: 220, passes: 14, lum: 45, sharp: 50, blue: 85, warm: 75, contrast: 18 },
+    extreme:  { sat: 270, passes: 20, lum: 30, sharp: 60, blue: 100, warm: 90, contrast: 25 }
+  };
+
+  function updateLabels() {
+    vals.sat.textContent = sliders.sat.value + '%';
+    vals.passes.textContent = sliders.passes.value;
+    vals.lum.textContent = sliders.lum.value + '%';
+    vals.sharp.textContent = sliders.sharp.value + '%';
+    vals.blue.textContent = sliders.blue.value;
+    vals.warm.textContent = sliders.warm.value;
+    vals.contrast.textContent = sliders.contrast.value + '%';
+  }
+
+  function applyPreset(name) {
+    const p = presets[name];
+    if (!p) return;
+    Object.keys(p).forEach(k => sliders[k].value = p[k]);
+    updateLabels();
+    document.querySelectorAll('.preset-btn').forEach(b => {
+      b.classList.toggle('active', b.dataset.preset === name);
+    });
+    process();
+  }
+
+  document.querySelectorAll('.preset-btn').forEach(btn => {
+    btn.addEventListener('click', () => applyPreset(btn.dataset.preset));
+  });
+
+  Object.values(sliders).forEach(s => {
+    s.addEventListener('input', () => {
+      updateLabels();
+      document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+      process();
+    });
+  });
+
+  // File loading
+  function loadFile(file) {
+    if (!file || !file.type.startsWith('image/')) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        originalImage = img;
+        setupCanvas(img);
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function setupCanvas(img) {
+    const maxDim = 1600;
+    let w = img.naturalWidth, h = img.naturalHeight;
+    if (w > maxDim || h > maxDim) {
+      const scale = maxDim / Math.max(w, h);
+      w = Math.round(w * scale);
+      h = Math.round(h * scale);
+    }
+    canvas.width = w;
+    canvas.height = h;
+    baseCanvas.width = w;
+    baseCanvas.height = h;
+    baseCtx.drawImage(img, 0, 0, w, h);
+    originalImageData = baseCtx.getImageData(0, 0, w, h);
+    labCastCache = null;
+
+    dropZone.style.display = 'none';
+    canvasWrap.style.display = 'block';
+    emptyMsg.style.display = 'none';
+    controls.style.display = 'flex';
+
+    applyPreset('classic');
+  }
+
+  dropZone.addEventListener('click', () => fileInput.click());
+  fileInput.addEventListener('change', (e) => loadFile(e.target.files[0]));
+
+  ['dragenter', 'dragover'].forEach(evt => {
+    dropZone.addEventListener(evt, (e) => {
+      e.preventDefault();
+      dropZone.classList.add('drag');
+    });
+  });
+  ['dragleave', 'drop'].forEach(evt => {
+    dropZone.addEventListener(evt, (e) => {
+      e.preventDefault();
+      dropZone.classList.remove('drag');
+    });
+  });
+  dropZone.addEventListener('drop', (e) => {
+    const file = e.dataTransfer.files[0];
+    loadFile(file);
+  });
+
+  // RGB <-> HSL helpers (used for contrast pass)
+  function rgbToHsl(r, g, b) {
+    r /= 255; g /= 255; b /= 255;
+    const max = Math.max(r, g, b), min = Math.min(r, g, b);
+    let h, s, l = (max + min) / 2;
+    if (max === min) { h = s = 0; }
+    else {
+      const d = max - min;
+      s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+      switch (max) {
+        case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+        case g: h = (b - r) / d + 2; break;
+        case b: h = (r - g) / d + 4; break;
+      }
+      h /= 6;
+    }
+    return [h, s, l];
+  }
+
+  function hslToRgb(h, s, l) {
+    let r, g, b;
+    if (s === 0) { r = g = b = l; }
+    else {
+      const hue2rgb = (p, q, t) => {
+        if (t < 0) t += 1;
+        if (t > 1) t -= 1;
+        if (t < 1/6) return p + (q - p) * 6 * t;
+        if (t < 1/2) return q;
+        if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+        return p;
+      };
+      const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+      const p = 2 * l - q;
+      r = hue2rgb(p, q, h + 1/3);
+      g = hue2rgb(p, q, h);
+      b = hue2rgb(p, q, h - 1/3);
+    }
+    return [r * 255, g * 255, b * 255];
+  }
+
+  function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+
+  // Fast box blur (three passes ≈ Gaussian) over a single-channel Float32Array.
+  // Used to smooth the LAB a/b chroma planes before boosting them — this mirrors
+  // what multi-frame stacking does for real astrophotographers (averages out
+  // per-pixel chroma noise and JPEG macroblocking while leaving luminance/detail
+  // untouched), and is what stops the blue/warm push from amplifying compression
+  // artifacts into hard-edged blocks.
+  function boxBlur1D(src, w, h, horizontal, radius) {
+    const out = new Float32Array(src.length);
+    if (radius < 1) { out.set(src); return out; }
+    if (horizontal) {
+      for (let y = 0; y < h; y++) {
+        const rowOff = y * w;
+        let sum = 0;
+        for (let x = -radius; x <= radius; x++) {
+          const xx = clamp(x, 0, w - 1);
+          sum += src[rowOff + xx];
+        }
+        for (let x = 0; x < w; x++) {
+          out[rowOff + x] = sum / (radius * 2 + 1);
+          const addX = clamp(x + radius + 1, 0, w - 1);
+          const subX = clamp(x - radius, 0, w - 1);
+          sum += src[rowOff + addX] - src[rowOff + subX];
+        }
+      }
+    } else {
+      for (let x = 0; x < w; x++) {
+        let sum = 0;
+        for (let y = -radius; y <= radius; y++) {
+          const yy = clamp(y, 0, h - 1);
+          sum += src[yy * w + x];
+        }
+        for (let y = 0; y < h; y++) {
+          out[y * w + x] = sum / (radius * 2 + 1);
+          const addY = clamp(y + radius + 1, 0, h - 1);
+          const subY = clamp(y - radius, 0, h - 1);
+          sum += src[addY * w + x] - src[subY * w + x];
+        }
+      }
+    }
+    return out;
+  }
+  function smoothChannel(src, w, h, radius) {
+    let a = boxBlur1D(src, w, h, true, radius);
+    a = boxBlur1D(a, w, h, false, radius);
+    a = boxBlur1D(a, w, h, true, radius);
+    a = boxBlur1D(a, w, h, false, radius);
+    a = boxBlur1D(a, w, h, true, radius);
+    a = boxBlur1D(a, w, h, false, radius);
+    return a;
+  }
+
+  // ---- sRGB <-> CIE LAB (D65), for perceptually-accurate chroma work ----
+  function srgbToLinear(c) {
+    c /= 255;
+    return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+  }
+  function linearToSrgb(c) {
+    c = clamp(c, 0, 1);
+    const v = c <= 0.0031308 ? c * 12.92 : 1.055 * Math.pow(c, 1 / 2.4) - 0.055;
+    return clamp(v * 255, 0, 255);
+  }
+  function rgbToLab(r, g, b) {
+    const rl = srgbToLinear(r), gl = srgbToLinear(g), bl = srgbToLinear(b);
+    let x = rl * 0.4124564 + gl * 0.3575761 + bl * 0.1804375;
+    let y = rl * 0.2126729 + gl * 0.7151522 + bl * 0.0721750;
+    let z = rl * 0.0193339 + gl * 0.1191920 + bl * 0.9503041;
+    x /= 0.95047; y /= 1.0; z /= 1.08883;
+    const f = t => t > 0.008856 ? Math.cbrt(t) : (7.787 * t + 16 / 116);
+    const fx = f(x), fy = f(y), fz = f(z);
+    const L = 116 * fy - 16;
+    const A = 500 * (fx - fy);
+    const B = 200 * (fy - fz);
+    return [L, A, B];
+  }
+  function labToRgb(L, A, B) {
+    const fy = (L + 16) / 116;
+    const fx = fy + A / 500;
+    const fz = fy - B / 200;
+    const finv = t => { const t3 = t * t * t; return t3 > 0.008856 ? t3 : (t - 16 / 116) / 7.787; };
+    let x = finv(fx) * 0.95047;
+    let y = finv(fy) * 1.0;
+    let z = finv(fz) * 1.08883;
+    let rl = x * 3.2404542 + y * -1.5371385 + z * -0.4985314;
+    let gl = x * -0.9692660 + y * 1.8760108 + z * 0.0415560;
+    let bl = x * 0.0556434 + y * -0.2040259 + z * 1.0572252;
+    return [linearToSrgb(rl), linearToSrgb(gl), linearToSrgb(bl)];
+  }
+
+  function process() {
+    if (!originalImageData) return;
+
+    const satBoost = parseInt(sliders.sat.value) / 100;
+    const passes = parseInt(sliders.passes.value);
+    const lumProtect = parseInt(sliders.lum.value) / 100;
+    const sharpAmt = parseInt(sliders.sharp.value) / 100;
+    const blueShift = parseInt(sliders.blue.value) / 100;
+    const warmShift = parseInt(sliders.warm.value) / 100;
+    const contrastAmt = parseInt(sliders.contrast.value) / 100;
+
+    const w = canvas.width, h = canvas.height;
+    const src = originalImageData.data;
+    const out = new Uint8ClampedArray(src.length);
+    const n = w * h;
+
+    // --- Build/reuse cached LAB planes for this image (independent of sliders) ---
+    // Real lunar mineral variation (titanium-blue maria vs iron-tan highlands) is a
+    // *relative* a/b signal sitting on top of whatever color cast the optics/sensor
+    // introduced, plus per-pixel chroma noise from JPEG compression. We remove the
+    // disk-wide cast and smooth the chroma planes (not luminance) before boosting —
+    // mirroring what multi-frame stacking does for real astrophotographers — so the
+    // blue/warm push separates real mineral signal instead of amplifying compression
+    // blocking into hard-edged artifacts.
+    if (!labCastCache || labCastCache.src !== src) {
+      const Lp = new Float32Array(n), Ap = new Float32Array(n), Bp = new Float32Array(n);
+      let sumA = 0, sumB = 0, cnt = 0;
+      for (let i = 0, p = 0; i < src.length; i += 4, p++) {
+        const r = src[i], g = src[i + 1], b = src[i + 2];
+        const [L, A, B] = rgbToLab(r, g, b);
+        Lp[p] = L; Ap[p] = A; Bp[p] = B;
+        if (r + g + b > 24) { sumA += A; sumB += B; cnt++; }
+      }
+      const radius = Math.max(1, Math.round(Math.min(w, h) * 0.006));
+      const Asmooth = smoothChannel(Ap, w, h, radius);
+      const Bsmooth = smoothChannel(Bp, w, h, radius);
+      const castA = cnt ? sumA / cnt : 0;
+      const castB = cnt ? sumB / cnt : 0;
+      labCastCache = { src, Lp, Asmooth, Bsmooth, castA, castB };
+    }
+    const { Lp, Asmooth, Bsmooth, castA, castB } = labCastCache;
+
+    // Per-pass effective chroma multiplier compounds gently across N stacked passes,
+    // mirroring the manual "duplicate layer, boost saturation, blend" technique.
+    // The blue/warm hue-selective push is now folded into the SAME per-pass loop
+    // (rather than applied once after all passes) so it builds up incrementally
+    // exactly like a human stacking N saturation layers in Photoshop, instead of
+    // landing as one large jump that reads as "pushed" rather than "layered".
+    const perPassChroma = 1 + ((satBoost - 1) / passes);
+    const perPassBlue = blueShift / passes;
+    const perPassWarm = warmShift / passes;
+
+    for (let i = 0, p = 0; i < src.length; i += 4, p++) {
+      const a = src[i + 3];
+      const origL = Lp[p];
+      const origR = src[i], origG = src[i + 1], origB = src[i + 2];
+
+      // Hard-exclude background: pixels at or near pure black (the space around
+      // the disk) never accumulate chroma drift, however many passes are run.
+      // Without this, compounding passes slowly pushes black toward indigo as
+      // floating-point LAB roundtrip noise gets amplified pass over pass.
+      if (origR + origG + origB < 10) {
+        out[i] = origR; out[i + 1] = origG; out[i + 2] = origB; out[i + 3] = a;
+        continue;
+      }
+
+      // Chroma relative to the disk's own neutral point (cast removed).
+      let ca = Asmooth[p] - castA;
+      let cb = Bsmooth[p] - castB;
+
+      // Stack N incremental passes: each pass nudges chroma magnitude up AND
+      // nudges the blue/warm separation up, together, so by pass N the color
+      // has built up the way real layered saturation stacking does rather than
+      // having the hue push applied as a single large step at the end.
+      for (let pass = 0; pass < passes; pass++) {
+        ca *= perPassChroma;
+        cb *= perPassChroma;
+        if (perPassBlue !== 0 && cb < 0) {
+          cb -= Math.abs(cb) * perPassBlue * 0.55;
+          ca -= Math.abs(ca) * perPassBlue * 0.20;
+        }
+        if (perPassWarm !== 0 && cb > 0) {
+          cb += Math.abs(cb) * perPassWarm * 0.50;
+          ca += Math.abs(ca) * perPassWarm * 0.18;
+        }
+      }
+
+      // Re-add a fraction of the original cast (keeps white balance roughly
+      // intact rather than forcing true neutral grey) and clamp to LAB range.
+      const newA = clamp(ca + castA * 0.45, -110, 110);
+      const newB = clamp(cb + castB * 0.45, -110, 110);
+
+      // Luminosity protect: blend the boosted-chroma color's L back toward the
+      // original L, so brightness stays true while only color separates out.
+      const [pr, pg, pb] = labToRgb(origL, newA, newB);
+      const [pL] = rgbToLab(pr, pg, pb);
+      const targetL = pL * (1 - lumProtect) + origL * lumProtect;
+      let [nr, ng, nb] = labToRgb(targetL, newA, newB);
+
+      // Contrast (simple S-curve around midpoint)
+      if (contrastAmt !== 0) {
+        const factor = (1 + contrastAmt);
+        nr = clamp((nr - 128) * factor + 128, 0, 255);
+        ng = clamp((ng - 128) * factor + 128, 0, 255);
+        nb = clamp((nb - 128) * factor + 128, 0, 255);
+      }
+
+      out[i] = nr;
+      out[i + 1] = ng;
+      out[i + 2] = nb;
+      out[i + 3] = a;
+    }
+
+    let resultData = new ImageData(out, w, h);
+
+    // Unsharp-mask style sharpening pass (simple 3x3 convolution blend)
+    if (sharpAmt > 0) {
+      resultData = applySharpen(resultData, w, h, sharpAmt);
+    }
+
+    ctx.putImageData(resultData, 0, 0);
+
+    if (document.getElementById('split-toggle').checked) {
+      drawSplit(resultData);
+    }
+  }
+
+  function applySharpen(imageData, w, h, amount) {
+    const src = imageData.data;
+    const out = new Uint8ClampedArray(src.length);
+    const kernel = [0, -1, 0, -1, 5, -1, 0, -1, 0];
+    const mix = amount;
+
+    for (let y = 0; y < h; y++) {
+      for (let x = 0; x < w; x++) {
+        const idx = (y * w + x) * 4;
+        if (x === 0 || y === 0 || x === w-1 || y === h-1) {
+          out[idx] = src[idx]; out[idx+1] = src[idx+1]; out[idx+2] = src[idx+2]; out[idx+3] = src[idx+3];
+          continue;
+        }
+        for (let c = 0; c < 3; c++) {
+          let sum = 0, k = 0;
+          for (let ky = -1; ky <= 1; ky++) {
+            for (let kx = -1; kx <= 1; kx++) {
+              const nIdx = ((y+ky) * w + (x+kx)) * 4 + c;
+              sum += src[nIdx] * kernel[k];
+              k++;
+            }
+          }
+          const sharpened = clamp(sum, 0, 255);
+          out[idx+c] = src[idx+c] * (1 - mix) + sharpened * mix;
+        }
+        out[idx+3] = src[idx+3];
+      }
+    }
+    return new ImageData(out, w, h);
+  }
+
+  function drawSplit(resultData) {
+    const w = canvas.width, h = canvas.height;
+    const splitX = Math.floor(w / 2);
+    // putImageData paints at canvas (dx + dirtyX, dy + dirtyY), so dx must be 0
+    // here and dirtyX supplies the actual horizontal offset into each source.
+    ctx.putImageData(originalImageData, 0, 0, 0, 0, splitX, h);
+    ctx.putImageData(resultData, 0, 0, splitX, 0, w - splitX, h);
+    ctx.strokeStyle = 'rgba(255,107,53,0.8)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(splitX, 0);
+    ctx.lineTo(splitX, h);
+    ctx.stroke();
+  }
+
+  document.getElementById('split-toggle').addEventListener('change', process);
+
+  document.getElementById('reset-btn').addEventListener('click', () => {
+    applyPreset('classic');
+  });
+
+  document.getElementById('export-btn').addEventListener('click', () => {
+    const wasSplit = document.getElementById('split-toggle').checked;
+    if (wasSplit) {
+      document.getElementById('split-toggle').checked = false;
+      process();
+    }
+    canvas.toBlob((blob) => {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'moon-mineral-processed.png';
+      a.click();
+      URL.revokeObjectURL(url);
+      if (wasSplit) {
+        document.getElementById('split-toggle').checked = true;
+        process();
+      }
+    }, 'image/png');
+  });
+
+})();
+</script>
+
+</body>
+</html>
