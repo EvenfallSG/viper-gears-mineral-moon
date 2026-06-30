@@ -377,17 +377,17 @@
         <div class="control">
           <div class="control-head">
             <label>Layer passes</label>
-            <span class="val" id="val-passes">10</span>
+            <span class="val" id="val-passes">14</span>
           </div>
-          <input type="range" id="passes" min="1" max="24" value="10" step="1">
+          <input type="range" id="passes" min="1" max="80" value="14" step="1">
         </div>
 
         <div class="control">
           <div class="control-head">
             <label>Luminosity protect</label>
-            <span class="val" id="val-lum">65%</span>
+            <span class="val" id="val-lum">60%</span>
           </div>
-          <input type="range" id="lum" min="0" max="100" value="65" step="5">
+          <input type="range" id="lum" min="0" max="100" value="60" step="5">
         </div>
 
         <div class="control">
@@ -407,17 +407,17 @@
         <div class="control">
           <div class="control-head">
             <label>Blue / titanium shift</label>
-            <span class="val" id="val-blue">40</span>
+            <span class="val" id="val-blue">55</span>
           </div>
-          <input type="range" id="blue" min="0" max="100" value="40" step="5">
+          <input type="range" id="blue" min="0" max="100" value="55" step="5">
         </div>
 
         <div class="control">
           <div class="control-head">
             <label>Warm / iron shift</label>
-            <span class="val" id="val-warm">40</span>
+            <span class="val" id="val-warm">50</span>
           </div>
-          <input type="range" id="warm" min="0" max="100" value="40" step="5">
+          <input type="range" id="warm" min="0" max="100" value="50" step="5">
         </div>
 
         <div class="control">
@@ -433,10 +433,10 @@
 
       <div class="toggle-row">
         <label>Before / after split</label>
-        <div class="switch">
+        <label class="switch">
           <input type="checkbox" id="split-toggle">
           <span class="slider-toggle"></span>
-        </div>
+        </label>
       </div>
 
       <div class="footnote">
@@ -489,10 +489,10 @@
   };
 
   const presets = {
-    subtle:   { sat: 130, passes: 6,  lum: 80, sharp: 20, blue: 30, warm: 25, contrast: 5 },
-    classic:  { sat: 170, passes: 10, lum: 60, sharp: 35, blue: 60, warm: 55, contrast: 10 },
-    enhanced: { sat: 220, passes: 14, lum: 45, sharp: 50, blue: 85, warm: 75, contrast: 18 },
-    extreme:  { sat: 270, passes: 20, lum: 30, sharp: 60, blue: 100, warm: 90, contrast: 25 }
+    subtle:   { sat: 130, passes: 8,  lum: 80, sharp: 20, blue: 30, warm: 25, contrast: 5 },
+    classic:  { sat: 170, passes: 14, lum: 60, sharp: 35, blue: 55, warm: 50, contrast: 10 },
+    enhanced: { sat: 220, passes: 20, lum: 42, sharp: 50, blue: 70, warm: 65, contrast: 18 },
+    extreme:  { sat: 250, passes: 28, lum: 28, sharp: 60, blue: 85, warm: 75, contrast: 25 }
   };
 
   function updateLabels() {
@@ -759,15 +759,19 @@
     }
     const { Lp, Asmooth, Bsmooth, castA, castB } = labCastCache;
 
-    // Per-pass effective chroma multiplier compounds gently across N stacked passes,
-    // mirroring the manual "duplicate layer, boost saturation, blend" technique.
-    // The blue/warm hue-selective push is now folded into the SAME per-pass loop
-    // (rather than applied once after all passes) so it builds up incrementally
-    // exactly like a human stacking N saturation layers in Photoshop, instead of
-    // landing as one large jump that reads as "pushed" rather than "layered".
-    const perPassChroma = 1 + ((satBoost - 1) / passes);
-    const perPassBlue = blueShift / passes;
-    const perPassWarm = warmShift / passes;
+    // Per-pass effective chroma multiplier. IMPORTANT: this is NOT divided by
+    // `passes` — each pass applies a small fixed-rate boost driven by the
+    // saturation slider, so running more passes genuinely compounds to a
+    // stronger total result (like physically stacking more saturation layers
+    // in Photoshop) instead of asymptoting to the same ceiling regardless of
+    // pass count. The existing LAB a/b clamp (±110) is what keeps very high
+    // pass counts (50-80) from blowing out, not an artificial 1/passes cap.
+    const perPassChroma = 1 + (satBoost - 1) * 0.025;
+    // Same principle for the blue/warm hue-selective push: a small fixed
+    // per-pass rate, not diluted by pass count, so "Layer passes" is a real
+    // depth control for color separation too, not just overall saturation.
+    const perPassBlue = blueShift * 0.025;
+    const perPassWarm = warmShift * 0.022;
 
     for (let i = 0, p = 0; i < src.length; i += 4, p++) {
       const a = src[i + 3];
@@ -790,7 +794,10 @@
       // Stack N incremental passes: each pass nudges chroma magnitude up AND
       // nudges the blue/warm separation up, together, so by pass N the color
       // has built up the way real layered saturation stacking does rather than
-      // having the hue push applied as a single large step at the end.
+      // having the hue push applied as a single large step at the end. Because
+      // perPassChroma/perPassBlue/perPassWarm are fixed rates (not divided by
+      // passes), more passes means more total build-up, with the LAB clamp
+      // below as the only real ceiling.
       for (let pass = 0; pass < passes; pass++) {
         ca *= perPassChroma;
         cb *= perPassChroma;
