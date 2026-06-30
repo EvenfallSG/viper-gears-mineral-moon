@@ -422,6 +422,14 @@
 
         <div class="control">
           <div class="control-head">
+            <label>Red / orange bias</label>
+            <span class="val" id="val-redbias">130</span>
+          </div>
+          <input type="range" id="redbias" min="50" max="300" value="130" step="10">
+        </div>
+
+        <div class="control">
+          <div class="control-head">
             <label>Contrast</label>
             <span class="val" id="val-contrast">10%</span>
           </div>
@@ -475,6 +483,7 @@
     sharp: document.getElementById('sharp'),
     blue: document.getElementById('blue'),
     warm: document.getElementById('warm'),
+    redbias: document.getElementById('redbias'),
     contrast: document.getElementById('contrast')
   };
 
@@ -485,14 +494,15 @@
     sharp: document.getElementById('val-sharp'),
     blue: document.getElementById('val-blue'),
     warm: document.getElementById('val-warm'),
+    redbias: document.getElementById('val-redbias'),
     contrast: document.getElementById('val-contrast')
   };
 
   const presets = {
-    subtle:   { sat: 130, passes: 8,  lum: 80, sharp: 20, blue: 30, warm: 25, contrast: 5 },
-    classic:  { sat: 170, passes: 14, lum: 60, sharp: 35, blue: 55, warm: 50, contrast: 10 },
-    enhanced: { sat: 220, passes: 20, lum: 42, sharp: 50, blue: 70, warm: 65, contrast: 18 },
-    extreme:  { sat: 250, passes: 28, lum: 28, sharp: 60, blue: 85, warm: 75, contrast: 25 }
+    subtle:   { sat: 130, passes: 8,  lum: 80, sharp: 20, blue: 30, warm: 25, redbias: 100, contrast: 5 },
+    classic:  { sat: 170, passes: 14, lum: 60, sharp: 35, blue: 55, warm: 50, redbias: 130, contrast: 10 },
+    enhanced: { sat: 220, passes: 20, lum: 42, sharp: 50, blue: 70, warm: 65, redbias: 150, contrast: 18 },
+    extreme:  { sat: 250, passes: 28, lum: 28, sharp: 60, blue: 85, warm: 75, redbias: 170, contrast: 25 }
   };
 
   function updateLabels() {
@@ -502,6 +512,7 @@
     vals.sharp.textContent = sliders.sharp.value + '%';
     vals.blue.textContent = sliders.blue.value;
     vals.warm.textContent = sliders.warm.value;
+    vals.redbias.textContent = sliders.redbias.value;
     vals.contrast.textContent = sliders.contrast.value + '%';
   }
 
@@ -726,6 +737,7 @@
     const sharpAmt = parseInt(sliders.sharp.value) / 100;
     const blueShift = parseInt(sliders.blue.value) / 100;
     const warmShift = parseInt(sliders.warm.value) / 100;
+    const redBias = parseInt(sliders.redbias.value) / 100;
     const contrastAmt = parseInt(sliders.contrast.value) / 100;
 
     const w = canvas.width, h = canvas.height;
@@ -772,6 +784,13 @@
     // depth control for color separation too, not just overall saturation.
     const perPassBlue = blueShift * 0.025;
     const perPassWarm = warmShift * 0.022;
+    // Red/orange bias scales ONLY the red-axis (a) growth on the warm side,
+    // independent of warmShift's overall strength. At high pass counts the
+    // warm push otherwise drifts toward yellow-dominant (low a/b ratio)
+    // especially in bright highlands, reading as "ochre" rather than tan —
+    // this lets the user pull the warm side back toward red/orange without
+    // changing how strong the warm push is overall. 100 = unchanged from
+    // the tuned default; below 100 leans more yellow, above leans more red.
 
     for (let i = 0, p = 0; i < src.length; i += 4, p++) {
       const a = src[i + 3];
@@ -807,7 +826,7 @@
         }
         if (perPassWarm !== 0 && cb > 0) {
           cb += Math.abs(cb) * perPassWarm * 0.50;
-          ca += Math.abs(ca) * perPassWarm * 0.18;
+          ca += Math.abs(ca) * perPassWarm * 0.18 * redBias;
         }
       }
 
