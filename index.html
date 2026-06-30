@@ -254,6 +254,48 @@
     cursor: not-allowed;
   }
 
+  .picker-row {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-bottom: 0.9rem;
+  }
+  .swatch {
+    width: 28px;
+    height: 28px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    flex-shrink: 0;
+    background: repeating-conic-gradient(#1a1a1a 0% 25%, #222 0% 50%) 50% / 8px 8px;
+  }
+  .swatch.has-pick { background: none; }
+  .pick-btn {
+    flex: 1;
+    padding: 0.5rem 0.7rem;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-dim);
+    font-size: 0.78rem;
+    font-family: inherit;
+    letter-spacing: 0.02em;
+    cursor: pointer;
+    transition: border-color 0.15s, color 0.15s;
+  }
+  .pick-btn:hover { border-color: var(--text-dim); color: var(--text); }
+  .pick-btn.active {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: rgba(255,107,53,0.08);
+  }
+  .pick-hint {
+    font-size: 0.72rem;
+    color: var(--accent);
+    margin: -0.4rem 0 0.9rem;
+    display: none;
+  }
+  .pick-hint.show { display: block; }
+  canvas.picking { cursor: crosshair !important; }
   .toggle-row {
     display: flex;
     align-items: center;
@@ -439,6 +481,74 @@
 
       <div class="divider"></div>
 
+      <div>
+        <div class="section-label">Hue suppressor</div>
+
+        <div class="picker-row">
+          <div class="swatch" id="hue-swatch"></div>
+          <button class="pick-btn" id="hue-pick-btn">Pick unwanted color</button>
+        </div>
+        <div class="pick-hint" id="hue-pick-hint">Click anywhere on the moon to sample that color</div>
+
+        <div class="control">
+          <div class="control-head">
+            <label>Tolerance</label>
+            <span class="val" id="val-huetol">35</span>
+          </div>
+          <input type="range" id="huetol" min="5" max="100" value="35" step="5">
+        </div>
+
+        <div class="control">
+          <div class="control-head">
+            <label>Suppress strength</label>
+            <span class="val" id="val-huestr">0</span>
+          </div>
+          <input type="range" id="huestr" min="0" max="100" value="0" step="5">
+        </div>
+
+        <button class="action" id="hue-clear-btn" style="width:100%; margin-top:0.3rem;">Clear pick</button>
+      </div>
+
+      <div class="divider"></div>
+
+      <div>
+        <div class="section-label">Chromatic aberration</div>
+
+        <div class="picker-row">
+          <div class="swatch has-pick" id="ca-swatch" style="background:var(--accent); opacity:0.25;"></div>
+          <button class="pick-btn" id="ca-pick-btn">Set optical center</button>
+        </div>
+        <div class="pick-hint" id="ca-pick-hint">Click the center of the moon's disc</div>
+
+        <div class="control">
+          <div class="control-head">
+            <label>Red channel scale</label>
+            <span class="val" id="val-cared">0</span>
+          </div>
+          <input type="range" id="cared" min="-100" max="100" value="0" step="1">
+        </div>
+
+        <div class="control">
+          <div class="control-head">
+            <label>Blue channel scale</label>
+            <span class="val" id="val-cablue">0</span>
+          </div>
+          <input type="range" id="cablue" min="-100" max="100" value="0" step="1">
+        </div>
+
+        <div class="control">
+          <div class="control-head">
+            <label>Edge defringe</label>
+            <span class="val" id="val-cadefringe">40</span>
+          </div>
+          <input type="range" id="cadefringe" min="0" max="100" value="40" step="5">
+        </div>
+
+        <button class="action" id="ca-reset-btn" style="width:100%; margin-top:0.3rem;">Reset center</button>
+      </div>
+
+      <div class="divider"></div>
+
       <div class="toggle-row">
         <label>Before / after split</label>
         <label class="switch">
@@ -448,7 +558,7 @@
       </div>
 
       <div class="footnote">
-        Technique: removes the disk's own color cast in CIE LAB space, then stacks N passes of chroma boost on the a/b plane (not absolute hue), pushing each pixel further toward blue or tan based on which side of neutral it already leans — luminosity stays locked to the original so only color separates out.
+        Technique: removes the disk's own color cast in CIE LAB space, then stacks N passes of chroma boost on the a/b plane (not absolute hue), pushing each pixel further toward blue or tan based on which side of neutral it already leans. Hue suppressor pulls a picked color (e.g. residual ochre) back toward neutral within a tolerance radius. CA correction radially rescales the red/blue channels around an optical center and desaturates fringing at high-contrast edges.
       </div>
 
       <div class="btn-row">
@@ -476,6 +586,16 @@
   let baseCanvas = document.createElement('canvas');
   let baseCtx = baseCanvas.getContext('2d', { willReadFrequently: true });
 
+  // Hue suppressor: a picked LAB a/b target the user wants neutralized
+  // (e.g. residual ochre), plus a flag for "next canvas click sets this".
+  let huePick = null;
+  let pickingHue = false;
+
+  // Chromatic aberration: optical center for radial channel rescale, plus a
+  // flag for "next canvas click sets this". Defaults to image center on load.
+  let caCenter = { x: 0, y: 0 };
+  let pickingCaCenter = false;
+
   const sliders = {
     sat: document.getElementById('sat'),
     passes: document.getElementById('passes'),
@@ -484,7 +604,12 @@
     blue: document.getElementById('blue'),
     warm: document.getElementById('warm'),
     redbias: document.getElementById('redbias'),
-    contrast: document.getElementById('contrast')
+    contrast: document.getElementById('contrast'),
+    huetol: document.getElementById('huetol'),
+    huestr: document.getElementById('huestr'),
+    cared: document.getElementById('cared'),
+    cablue: document.getElementById('cablue'),
+    cadefringe: document.getElementById('cadefringe')
   };
 
   const vals = {
@@ -495,8 +620,18 @@
     blue: document.getElementById('val-blue'),
     warm: document.getElementById('val-warm'),
     redbias: document.getElementById('val-redbias'),
-    contrast: document.getElementById('val-contrast')
+    contrast: document.getElementById('val-contrast'),
+    huetol: document.getElementById('val-huetol'),
+    huestr: document.getElementById('val-huestr'),
+    cared: document.getElementById('val-cared'),
+    cablue: document.getElementById('val-cablue'),
+    cadefringe: document.getElementById('val-cadefringe')
   };
+
+  // Presets don't set hue-suppressor or CA values — those are picked/tuned
+  // per-photo (different gear/session = different cast & CA signature) and
+  // shouldn't reset just because a saturation preset was clicked.
+  const presetOnlyKeys = ['sat','passes','lum','sharp','blue','warm','redbias','contrast'];
 
   const presets = {
     subtle:   { sat: 130, passes: 8,  lum: 80, sharp: 20, blue: 30, warm: 25, redbias: 100, contrast: 5 },
@@ -514,12 +649,17 @@
     vals.warm.textContent = sliders.warm.value;
     vals.redbias.textContent = sliders.redbias.value;
     vals.contrast.textContent = sliders.contrast.value + '%';
+    vals.huetol.textContent = sliders.huetol.value;
+    vals.huestr.textContent = sliders.huestr.value;
+    vals.cared.textContent = sliders.cared.value;
+    vals.cablue.textContent = sliders.cablue.value;
+    vals.cadefringe.textContent = sliders.cadefringe.value;
   }
 
   function applyPreset(name) {
     const p = presets[name];
     if (!p) return;
-    Object.keys(p).forEach(k => sliders[k].value = p[k]);
+    presetOnlyKeys.forEach(k => sliders[k].value = p[k]);
     updateLabels();
     document.querySelectorAll('.preset-btn').forEach(b => {
       b.classList.toggle('active', b.dataset.preset === name);
@@ -575,6 +715,14 @@
     emptyMsg.style.display = 'none';
     controls.style.display = 'flex';
 
+    // Reset per-image pick state: a hue pick or CA center from a previous
+    // photo has no meaning on a new one.
+    huePick = null;
+    caCenter = { x: w / 2, y: h / 2 };
+    updateHueSwatch();
+    sliders.huestr.value = 0;
+    updateLabels();
+
     applyPreset('classic');
   }
 
@@ -596,6 +744,99 @@
   dropZone.addEventListener('drop', (e) => {
     const file = e.dataTransfer.files[0];
     loadFile(file);
+  });
+
+  // --- Hue suppressor eyedropper ---
+  const huePickBtn = document.getElementById('hue-pick-btn');
+  const huePickHint = document.getElementById('hue-pick-hint');
+  const hueSwatch = document.getElementById('hue-swatch');
+  const hueClearBtn = document.getElementById('hue-clear-btn');
+
+  function updateHueSwatch() {
+    if (huePick) {
+      hueSwatch.style.background = `rgb(${huePick.r}, ${huePick.g}, ${huePick.b})`;
+      hueSwatch.classList.add('has-pick');
+    } else {
+      hueSwatch.style.background = '';
+      hueSwatch.classList.remove('has-pick');
+    }
+  }
+
+  huePickBtn.addEventListener('click', () => {
+    pickingCaCenter = false;
+    caPickBtn.classList.remove('active');
+    caPickHint.classList.remove('show');
+    pickingHue = !pickingHue;
+    huePickBtn.classList.toggle('active', pickingHue);
+    huePickHint.classList.toggle('show', pickingHue);
+    canvas.classList.toggle('picking', pickingHue);
+  });
+
+  hueClearBtn.addEventListener('click', () => {
+    huePick = null;
+    sliders.huestr.value = 0;
+    updateHueSwatch();
+    updateLabels();
+    process();
+  });
+
+  // --- CA optical-center picker ---
+  const caPickBtn = document.getElementById('ca-pick-btn');
+  const caPickHint = document.getElementById('ca-pick-hint');
+  const caResetBtn = document.getElementById('ca-reset-btn');
+
+  caPickBtn.addEventListener('click', () => {
+    pickingHue = false;
+    huePickBtn.classList.remove('active');
+    huePickHint.classList.remove('show');
+    pickingCaCenter = !pickingCaCenter;
+    caPickBtn.classList.toggle('active', pickingCaCenter);
+    caPickHint.classList.toggle('show', pickingCaCenter);
+    canvas.classList.toggle('picking', pickingCaCenter);
+  });
+
+  caResetBtn.addEventListener('click', () => {
+    if (!originalImageData) return;
+    caCenter = { x: canvas.width / 2, y: canvas.height / 2 };
+    process();
+  });
+
+  // Single click handler serves both pickers — at most one is active at a time.
+  canvas.addEventListener('click', (e) => {
+    if (!originalImageData) return;
+    if (!pickingHue && !pickingCaCenter) return;
+
+    const rect = canvas.getBoundingClientRect();
+    // Canvas is drawn at its native pixel size but may be CSS-scaled to fit
+    // the stage, so map the click through the displayed-to-actual ratio.
+    const x = Math.round((e.clientX - rect.left) * (canvas.width / rect.width));
+    const y = Math.round((e.clientY - rect.top) * (canvas.height / rect.height));
+    const cx = clamp(x, 0, canvas.width - 1);
+    const cy = clamp(y, 0, canvas.height - 1);
+
+    if (pickingHue) {
+      const idx = (cy * canvas.width + cx) * 4;
+      const r = originalImageData.data[idx], g = originalImageData.data[idx + 1], b = originalImageData.data[idx + 2];
+      const [, A, B] = rgbToLab(r, g, b);
+      huePick = { r, g, b, a: A, b2: B };
+      updateHueSwatch();
+      if (parseInt(sliders.huestr.value) === 0) {
+        sliders.huestr.value = 45; // give the pick an immediately visible effect
+        updateLabels();
+      }
+      pickingHue = false;
+      huePickBtn.classList.remove('active');
+      huePickHint.classList.remove('show');
+      canvas.classList.remove('picking');
+      process();
+    } else if (pickingCaCenter) {
+      caCenter = { x: cx, y: cy };
+      pickingCaCenter = false;
+      caPickBtn.classList.remove('active');
+      caPickHint.classList.remove('show');
+      canvas.classList.remove('picking');
+      process();
+    }
   });
 
   // RGB <-> HSL helpers (used for contrast pass)
@@ -739,9 +980,65 @@
     const warmShift = parseInt(sliders.warm.value) / 100;
     const redBias = parseInt(sliders.redbias.value) / 100;
     const contrastAmt = parseInt(sliders.contrast.value) / 100;
+    const hueTol = parseInt(sliders.huetol.value) / 100;
+    const hueStr = parseInt(sliders.huestr.value) / 100;
+    const caRed = parseInt(sliders.cared.value) / 500;   // -0.2..0.2 typical range
+    const caBlue = parseInt(sliders.cablue.value) / 500;
+    const caDefringe = parseInt(sliders.cadefringe.value) / 100;
 
     const w = canvas.width, h = canvas.height;
-    const src = originalImageData.data;
+    let src = originalImageData.data;
+
+    // --- Chromatic aberration correction (radial channel rescale) ---
+    // Lateral CA shows up as R/B channels being slightly magnified or shrunk
+    // relative to G around the optical center, growing with distance from
+    // center — classic fringing at the limb and crater rims, invisible near
+    // the middle of the frame. Correcting it means resampling R and B at a
+    // radially-scaled position so all three channels register on the same
+    // edge. This has to run BEFORE the mineral color math below, since that
+    // math reads R/G/B differences directly — feeding it pre-fringed pixels
+    // would otherwise read the fringe itself as "mineral" color.
+    if (caRed !== 0 || caBlue !== 0) {
+      const corrected = new Uint8ClampedArray(src.length);
+      const cx = caCenter.x, cy = caCenter.y;
+      const maxR = Math.max(
+        Math.hypot(cx, cy), Math.hypot(w - cx, cy),
+        Math.hypot(cx, h - cy), Math.hypot(w - cx, h - cy)
+      );
+      const sampleChannel = (data, x, y, c) => {
+        // Bilinear sample of one channel at a fractional (x, y).
+        const x0 = Math.floor(x), y0 = Math.floor(y);
+        const x1 = x0 + 1, y1 = y0 + 1;
+        const fx = x - x0, fy = y - y0;
+        const cx0 = clamp(x0, 0, w - 1), cx1 = clamp(x1, 0, w - 1);
+        const cy0 = clamp(y0, 0, h - 1), cy1 = clamp(y1, 0, h - 1);
+        const p00 = data[(cy0 * w + cx0) * 4 + c];
+        const p10 = data[(cy0 * w + cx1) * 4 + c];
+        const p01 = data[(cy1 * w + cx0) * 4 + c];
+        const p11 = data[(cy1 * w + cx1) * 4 + c];
+        return p00 * (1 - fx) * (1 - fy) + p10 * fx * (1 - fy) + p01 * (1 - fx) * fy + p11 * fx * fy;
+      };
+      for (let y = 0; y < h; y++) {
+        for (let x = 0; x < w; x++) {
+          const idx = (y * w + x) * 4;
+          const dx = x - cx, dy = y - cy;
+          const dist = Math.hypot(dx, dy) / maxR; // 0 at center, 1 at corner
+          // Scale factor grows toward the edges; caRed/caBlue sliders are
+          // signed so the user can pull a channel in or push it out.
+          const rScale = 1 - caRed * dist;
+          const bScale = 1 - caBlue * dist;
+          const rx = cx + dx * rScale, ry = cy + dy * rScale;
+          const bx = cx + dx * bScale, by = cy + dy * bScale;
+          corrected[idx]     = sampleChannel(src, rx, ry, 0);
+          corrected[idx + 1] = src[idx + 1]; // green is the reference channel
+          corrected[idx + 2] = sampleChannel(src, bx, by, 2);
+          corrected[idx + 3] = src[idx + 3];
+        }
+      }
+      src = corrected;
+      labCastCache = null; // CA-corrected pixels invalidate the cached LAB cast
+    }
+
     const out = new Uint8ClampedArray(src.length);
     const n = w * h;
 
@@ -857,6 +1154,67 @@
     }
 
     let resultData = new ImageData(out, w, h);
+
+    // --- Hue suppressor ---
+    // Pulls pixels near a user-picked color (e.g. residual ochre) back toward
+    // neutral. Distance is measured in LAB a/b space (perceptually even, same
+    // space the mineral color math itself uses) with a soft falloff so there's
+    // no hard masking edge — pixels well inside the tolerance radius get the
+    // full pull, pixels near the edge get a fading fraction of it, pixels
+    // outside are untouched.
+    if (huePick && hueStr > 0) {
+      const data = resultData.data;
+      const tolRadius = 8 + hueTol * 55; // LAB a/b units; tuned so slider 5-100 spans subtle to wide
+      for (let i = 0; i < data.length; i += 4) {
+        const r = data[i], g = data[i + 1], b = data[i + 2];
+        if (r + g + b < 10) continue; // skip background
+        const [L, A, B] = rgbToLab(r, g, b);
+        const da = A - huePick.a, db = B - huePick.b2;
+        const dist = Math.hypot(da, db);
+        if (dist >= tolRadius) continue;
+        const falloff = 1 - dist / tolRadius; // 1 at the picked color, 0 at the radius edge
+        const pull = falloff * hueStr;
+        // Desaturate toward neutral (a=0,b=0 offset from disk cast) rather
+        // than toward grey-zero, so the result still reads as "moon" and not
+        // "bleached patch" — it relaxes chroma magnitude without erasing it.
+        const newA = A * (1 - pull * 0.85);
+        const newB = B * (1 - pull * 0.85);
+        const [nr, ng, nb] = labToRgb(L, newA, newB);
+        data[i] = nr; data[i + 1] = ng; data[i + 2] = nb;
+      }
+    }
+
+    // --- CA edge defringe ---
+    // Residual color fringing after the radial correction above (or if the
+    // user hasn't dialed in scale sliders yet) tends to sit specifically on
+    // sharp luminance edges — the limb against black sky, crater rims, ray
+    // systems — because that's where channel misregistration is visible.
+    // Detect those edges via a luminance Sobel and desaturate chroma there in
+    // proportion to edge strength, leaving the low-contrast maria color
+    // (the actual mineral signal) untouched.
+    if (caDefringe > 0) {
+      const data = resultData.data;
+      const lum = new Float32Array(n);
+      for (let p = 0, i = 0; p < n; p++, i += 4) {
+        lum[p] = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
+      }
+      const original = new Uint8ClampedArray(data); // read edges from a stable copy
+      for (let y = 1; y < h - 1; y++) {
+        for (let x = 1; x < w - 1; x++) {
+          const p = y * w + x, idx = p * 4;
+          if (original[idx] + original[idx+1] + original[idx+2] < 10) continue;
+          const gx = lum[p - 1 - w] - lum[p + 1 - w] + 2*(lum[p - 1] - lum[p + 1]) + lum[p - 1 + w] - lum[p + 1 + w];
+          const gy = lum[p - 1 - w] + 2*lum[p - w] + lum[p + 1 - w] - lum[p - 1 + w] - 2*lum[p + w] - lum[p + 1 + w];
+          const edge = clamp(Math.hypot(gx, gy) / 400, 0, 1); // normalized edge strength
+          if (edge < 0.15) continue; // ignore low-contrast areas (maria color)
+          const r = original[idx], g = original[idx + 1], b = original[idx + 2];
+          const [L, A, B] = rgbToLab(r, g, b);
+          const pull = edge * caDefringe;
+          const [nr, ng, nb] = labToRgb(L, A * (1 - pull), B * (1 - pull));
+          data[idx] = nr; data[idx + 1] = ng; data[idx + 2] = nb;
+        }
+      }
+    }
 
     // Unsharp-mask style sharpening pass (simple 3x3 convolution blend)
     if (sharpAmt > 0) {
